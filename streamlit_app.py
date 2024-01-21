@@ -1,38 +1,40 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
 import streamlit as st
+from twilio.rest import Client
 
-"""
-# Welcome to Streamlit!
+# Twilio credentials
+account_sid = 'AC260e7f002c79dc8d82b9fd5c2b94be78'
+auth_token = '2c383cba5689336165d4048accbf6a18'
+twilio_phone_number = '+9609844800'
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+# Function to send SMS
+def send_sms(to, body):
+    client = Client(account_sid, auth_token)
+    
+    try:
+        message = client.messages.create(
+            to=to,
+            from_=twilio_phone_number,
+            body=body
+        )
+        return message.sid
+    except Exception as e:
+        return str(e)
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# Streamlit app
+def main():
+    st.title("SMS Sender App with Twilio")
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    # User input
+    recipient_number = st.text_input("Enter recipient's phone number:")
+    message_body = st.text_area("Enter your message:")
 
+    # Send SMS button
+    if st.button("Send SMS"):
+        if recipient_number and message_body:
+            result = send_sms(recipient_number, message_body)
+            st.success(f"SMS sent successfully! SID: {result}")
+        else:
+            st.warning("Please enter recipient's number and message.")
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
-
-    Point = namedtuple('Point', 'x y')
-    data = []
-
-    points_per_turn = total_points / num_turns
-
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+if __name__ == "__main__":
+    main()
